@@ -1,0 +1,111 @@
+[
+  {
+    "display name": "Inky Impressions",
+    "lut_name": "pimoroni",
+    "sliders": {
+      "saturation": 0.5
+    }
+  },
+  {
+    "display name": "Spectra 6 Palette",
+    "lut_name": "spectra_palette",
+    "palette": {
+      "black": [0, 0, 0],
+      "white": [255, 255, 255],
+      "red": [160, 32, 32],
+      "yellow": [240, 224, 80],
+      "green": [96, 128, 80],
+      "blue": [80, 128, 184]
+    },
+    "quantize": 1
+  },
+
+{
+    "display name": "Warm Boost - Extra",
+    "lut_name": "warm_boost_extra",
+    "sliders": {
+        "brightness": 1.12,
+        "saturation": 0.8
+    },
+    "channel_adjust": {
+        "red": 1.15,
+        "green": 0.92,
+        "blue": 0.75
+    }
+},
+{
+    "display name": "Warm Boost - Light",
+    "lut_name": "warm_boost_light",
+    "sliders": {
+        "brightness": 1.07,
+        "saturation": 0.8
+    },
+    "channel_adjust": {
+        "red": 1.07,
+        "green": 0.96,
+        "blue": 0.90
+    }
+},
+
+{
+  "display name": "High Contrast Pop",
+  "lut_name": "vibrant_pop",
+  "sliders": {
+    "brightness": 1.05,
+    "contrast": 1.25,
+    "saturation": 1.4,
+    "sharpness": 1.3
+  },
+  "palette": {
+    "black": [0, 0, 0],
+    "white": [255, 255, 255],
+    "red": [200, 0, 0],
+    "yellow": [255, 230, 0],
+    "green": [0, 150, 0],
+    "blue": [0, 100, 200]
+  },
+  "quantize": 1
+},
+  
+{
+  "display name": "True BW",
+  "lut_name": "true_bw",
+  "sliders": {
+    "brightness": 1.0,
+    "contrast": 1.0,
+    "saturation": 0.0,
+    "sharpness": 1.0
+  },
+  "channel_adjust": { "red": 1.0, "green": 1.0, "blue": 1.0 },
+  "palette": {
+    "black":  [20, 20, 20],
+    "white":  [245, 245, 245],
+    "red":    [20, 20, 20],
+    "yellow": [245, 245, 245],
+    "green":  [20, 20, 20],
+    "blue":   [245, 245, 245]
+  },
+  "quantize": 1
+},
+
+
+{
+  "display name": "Retro News BW",
+  "lut_name": "retro_news",
+  "sliders": {
+    "brightness": 0.95,
+    "contrast": 1.1,
+    "saturation": 0.4
+  },
+  "channel_adjust": {
+    "red": 1.05,
+    "green": 1.0,
+    "blue": 0.85
+  },
+  "palette": {
+    "white": [248, 245, 230],
+    "black": [30, 30, 40]
+  },
+  "quantize": 1
+}
+]

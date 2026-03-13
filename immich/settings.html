@@ -1,0 +1,462 @@
+<!-- Set forms -->
+
+<div class="form-group">
+    <label for="url" class="form-label">Base URL:</label>
+    <input
+    type="url"
+    id="url"
+    name="url"
+    placeholder="http://192.168.1.xxx:2283/"
+    required
+    class="form-input"
+    inputmode="url"
+    autocapitalize="off"
+    autocorrect="off"
+    autocomplete="off"
+    spellcheck="false"
+    >
+
+    <label for="album" class="form-label">Album Name:</label>
+    <input
+      type="text"
+      id="album"
+      name="album"
+      placeholder="Type or select an album..."
+      class="form-input"
+      list="albumSuggestions"
+      autocomplete="off"
+      disabled
+    >
+    <datalist id="albumSuggestions"></datalist>
+</div>
+
+<div class="form-group" style="display:flex; align-items:center; gap:10px;">
+  <label for="tagFilter" class="form-label" style="margin:0; white-space:nowrap;">Tag Filter:</label>
+  <input
+    type="text"
+    id="tagFilter"
+    name="tagFilter"
+    placeholder="Optional tag filter..."
+    class="form-input"
+    list="tagSuggestions"
+    autocomplete="off"
+    disabled
+    style="flex:1; margin:0;"
+  >
+  <datalist id="tagSuggestions"></datalist>
+</div>
+
+<div class="form-group">
+  <label for="showCaptions" class="form-label">Show Captions:</label>
+  <div class="toggle-container">
+    <input type="checkbox" id="showCaptions" name="showCaptions" class="toggle-checkbox" value="false" onclick="this.value = this.checked ? 'true' : 'false'">
+    <label for="showCaptions" class="toggle-label"></label>
+  </div>
+</div>
+
+<div class="form-group">
+  <div class="form-group">
+    <label for="padImage" class="form-label">Scale to Fit:</label>
+    <div class="toggle-container">
+      <input type="checkbox" id="padImage" name="padImage" class="toggle-checkbox" value="false">
+      <label for="padImage" class="toggle-label"></label>
+    </div>
+    <input type="hidden" name="padImage" value="true">
+  </div>
+
+  <div class="form-group">
+    <label for="randomize" class="form-label">Random Order:</label>
+    <div class="toggle-container">
+      <input type="checkbox" id="randomize" name="randomize" class="toggle-checkbox" value="false" onclick="this.value = this.checked ? 'true' : 'false'">
+      <label for="randomize" class="toggle-label"></label>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label class="form-label" for="backgroundOption">Background:</label>
+    <div class="form-group">
+      <input type="radio" id="backgroundOption" name="backgroundOption" value="blur">
+      <label>Blur</label>
+      <input type="radio" id="backgroundOption" name="backgroundOption" value="color">
+      <label>Color</label>
+      <input type="color" id="backgroundColor" name="backgroundColor" value="#ffffff" class="color-picker"/>
+    </div>
+  </div>
+</div>
+
+
+<!-- Image Adjustment Sliders -->
+<div class="collapsible">
+ <button type="button" class="collapsible-header" onclick="toggleCollapsible(this)">
+    Image Settings <span class="collapsible-icon">▼</span>
+</button>
+  <div class="settings-container collapsible-content">
+    <div class="form-group">
+      <label for="saturation" class="form-label" style="min-width: 100px;">Saturation:</label>
+      <span id="saturation-value">1.0</span>
+      <input type="range" id="saturation" name="saturation" class="form-input"
+             min="0" max="2" step="0.1" value="1.0" style="max-width: 400px;"
+             oninput="updateSliderValue(this)">
+    </div>
+    <div class="form-group">
+      <label for="brightness" class="form-label" style="min-width: 100px;">Brightness:</label>
+      <span id="brightness-value">1.0</span>
+      <input type="range" id="brightness" name="brightness" class="form-input"
+             min="0" max="2" step="0.1" value="1.0" style="max-width: 400px;"
+             oninput="updateSliderValue(this)">
+    </div>
+    <div class="form-group">
+      <label for="contrast" class="form-label" style="min-width: 100px;">Contrast:</label>
+      <span id="contrast-value">1.0</span>
+      <input type="range" id="contrast" name="contrast" class="form-input"
+             min="0" max="2" step="0.1" value="1.0" style="max-width: 400px;"
+             oninput="updateSliderValue(this)">
+    </div>
+    <div class="form-group">
+      <label for="sharpness" class="form-label" style="min-width: 100px;">Sharpness:</label>
+      <span id="sharpness-value">1.0</span>
+      <input type="range" id="sharpness" name="sharpness" class="form-input"
+             min="0" max="2" step="0.1" value="1.0" style="max-width: 400px;"
+             oninput="updateSliderValue(this)">
+    </div>
+
+    <!-- LUT Dropdown -->
+    <div class="form-group" style="margin-top: 10px;">
+      <label for="lut" class="form-label" style="min-width: 100px;">Color Preset:</label>
+      <select id="lut" name="lut" class="form-input" style="max-width: 400px;" onchange="onLutChange()">
+        <option value="">None</option>
+        {% for opt in lut_options %}
+        <option value="{{ opt.value }}">{{ opt.label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+</div>
+
+
+<script>
+const LS_KEY_IMMICH = "immich_ui_settings_v1";
+
+// System defaults passed from backend
+const systemDefaults = {{ system_image_settings | tojson }};
+
+// Full LUT data passed from backend
+const lutData = {{ lut_data | tojson }};
+
+function _lsRead() {
+  try {
+    const raw = localStorage.getItem(LS_KEY_IMMICH);
+    return raw ? JSON.parse(raw) : {};
+  } catch { return {}; }
+}
+
+function _lsWrite(obj) {
+  try {
+    localStorage.setItem(LS_KEY_IMMICH, JSON.stringify(obj || {}));
+  } catch {}
+}
+
+function _saveAllSettings() {
+  const s = _lsRead();
+  s.showCaptions = document.getElementById("showCaptions").checked;
+  s.padImage = document.getElementById("padImage").checked;
+  s.randomize = document.getElementById("randomize").checked;
+  const bgRadio = document.querySelector('input[name="backgroundOption"]:checked');
+  s.backgroundOption = bgRadio ? bgRadio.value : "blur";
+  s.backgroundColor = document.getElementById("backgroundColor").value || "#ffffff";
+  s.saturation = parseFloat(document.getElementById("saturation").value);
+  s.brightness = parseFloat(document.getElementById("brightness").value);
+  s.contrast = parseFloat(document.getElementById("contrast").value);
+  s.sharpness = parseFloat(document.getElementById("sharpness").value);
+  s.lut = document.getElementById("lut").value;
+  _lsWrite(s);
+}
+
+function updateSliderValue(slider) {
+  const valueDisplay = document.getElementById(slider.id + "-value");
+  if (valueDisplay) valueDisplay.textContent = parseFloat(slider.value).toFixed(1);
+  _saveAllSettings();
+}
+
+function setSlider(id, val) {
+  const slider = document.getElementById(id);
+  if (slider) {
+    slider.value = val;
+    const display = document.getElementById(id + "-value");
+    if (display) display.textContent = parseFloat(val).toFixed(1);
+  }
+}
+
+function setSlidersLocked(locked) {
+  ["saturation", "brightness", "contrast", "sharpness"].forEach(id => {
+    const slider = document.getElementById(id);
+    if (slider) slider.disabled = locked;
+  });
+}
+
+function onLutChange() {
+  const lutName = document.getElementById("lut").value;
+
+if (!lutName) {
+  // "None" selected — unlock sliders and reset all sliders to 1.0
+  setSlidersLocked(false);
+  ["saturation", "brightness", "contrast", "sharpness"].forEach(id => {
+    setSlider(id, 1.0);
+  });
+
+  } else {
+    // LUT selected — update sliders to LUT values and lock
+    const lut = lutData[lutName];
+    if (lut) {
+      const sliders = lut.sliders || {};
+      ["saturation", "brightness", "contrast", "sharpness"].forEach(id => {
+        // Use LUT slider value if present, otherwise system default
+        const val = (id in sliders) ? sliders[id] : (systemDefaults[id] || 1.0);
+        setSlider(id, val);
+      });
+    }
+    setSlidersLocked(true);
+  }
+
+  _saveAllSettings();
+}
+
+function toggleCollapsible(button) {
+  const content = button.nextElementSibling;
+  const icon = button.querySelector(".collapsible-icon");
+  button.classList.toggle("active");
+  content.style.display = content.style.display === "block" ? "none" : "block";
+  icon.textContent = content.style.display === "block" ? "▲" : "▼";
+}
+
+  function setAlbumEnabled(enabled) {
+    const album = document.getElementById("album");
+    if (album) album.disabled = !enabled;
+  }
+
+  function setTagEnabled(enabled) {
+    const tag = document.getElementById("tagFilter");
+    if (tag) tag.disabled = !enabled;
+  }
+
+  function normalizeBaseUrl(raw) {
+    let s = (raw || "").trim();
+    if (!s) return "";
+    if (s === "http://" || s === "https://") return "";
+    if (!/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(s)) s = "http://" + s;
+    if (!/^https?:\/\//i.test(s)) return "";
+    s = s.replace(/\/+$/g, "");
+    try {
+      const u = new URL(s);
+      if (!u.hostname) return "";
+    } catch (e) { return ""; }
+    return s;
+  }
+
+  let _lastValidatedUrl = null;
+  let _isUrlValid = false;
+  let _inFlight = false;
+
+  async function validateUrlViaBackend(showAlertOnError = true) {
+    const urlEl = document.getElementById("url");
+    if (!urlEl) return false;
+
+    const normalized = normalizeBaseUrl(urlEl.value);
+
+    if (!normalized) {
+      _lastValidatedUrl = null;
+      _isUrlValid = false;
+      setAlbumEnabled(false);
+      setTagEnabled(false);
+      return false;
+    }
+
+    if (urlEl.value.trim() !== normalized) urlEl.value = normalized;
+
+    if (_lastValidatedUrl === normalized) {
+      if (_isUrlValid) { setAlbumEnabled(true); setTagEnabled(true); }
+      return _isUrlValid;
+    }
+
+    if (_inFlight) return _isUrlValid;
+    _inFlight = true;
+    setAlbumEnabled(false);
+    setTagEnabled(false);
+
+    try {
+      const controller = new AbortController();
+      const fetchTimeout = setTimeout(() => controller.abort(), 6000);
+      const endpoint = `/plugin/immich/immich_albums?base_url=${encodeURIComponent(normalized)}`;
+      let res, data;
+      try {
+        res = await fetch(endpoint, { cache: "no-store", signal: controller.signal });
+        data = await res.json().catch(() => null);
+      } finally {
+        clearTimeout(fetchTimeout);
+      }
+
+      if (res.ok && data && data.ok) {
+        _lastValidatedUrl = normalized;
+        _isUrlValid = true;
+        localStorage.setItem("immich_base_url", normalized);
+
+        const albumEl = document.getElementById("album");
+        const savedAlbum = albumEl.getAttribute("data-saved-value") || "";
+        const datalistAl = document.getElementById("albumSuggestions");
+        datalistAl.innerHTML = "";
+        (data.albums || []).forEach(a => {
+          const opt = document.createElement("option");
+          opt.value = a.name;
+          datalistAl.appendChild(opt);
+        });
+        if (savedAlbum) albumEl.value = savedAlbum;
+        else if (data.albums && data.albums.length > 0) albumEl.value = data.albums[0].name;
+        setAlbumEnabled(true);
+
+        try {
+          const tagRes = await fetch(`/plugin/immich/immich_tags?base_url=${encodeURIComponent(normalized)}`, { cache: "no-store" });
+          const tagData = await tagRes.json().catch(() => null);
+          if (tagRes.ok && tagData && tagData.ok) {
+            const datalist = document.getElementById("tagSuggestions");
+            datalist.innerHTML = "";
+            (tagData.tags || []).forEach(tag => {
+              const opt = document.createElement("option");
+              opt.value = tag;
+              datalist.appendChild(opt);
+            });
+            setTagEnabled(true);
+          }
+        } catch (e) { console.error("Failed to load tags:", e); }
+
+        return true;
+      }
+
+      _lastValidatedUrl = normalized;
+      _isUrlValid = false;
+      if (showAlertOnError) alert((data && data.error) || "Please enter a valid Immich Base URL.");
+      setAlbumEnabled(false);
+      setTagEnabled(false);
+      return false;
+
+    } catch (error) {
+      console.error("Error:", error);
+      _lastValidatedUrl = normalized;
+      _isUrlValid = false;
+      if (showAlertOnError) alert("Please enter a valid Immich Base URL.");
+      setAlbumEnabled(false);
+      setTagEnabled(false);
+      return false;
+    } finally {
+      _inFlight = false;
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    setAlbumEnabled(false);
+    setTagEnabled(false);
+
+    let backgroundOption = "blur";
+
+    const storedUrl = localStorage.getItem("immich_base_url") || "";
+    document.getElementById("url").value = storedUrl;
+
+    if (typeof loadPluginSettings !== "undefined" && loadPluginSettings) {
+      const urlVal = (pluginSettings && pluginSettings.url) ? pluginSettings.url : storedUrl;
+      const albumVal = (pluginSettings && pluginSettings.album) ? pluginSettings.album : "";
+      const tagVal = (pluginSettings && pluginSettings.tagFilter) ? pluginSettings.tagFilter : "";
+
+      document.getElementById("url").value = urlVal;
+
+      const albumEl = document.getElementById("album");
+      albumEl.setAttribute("data-saved-value", albumVal);
+      albumEl.value = albumVal;
+
+      document.getElementById("tagFilter").value = tagVal;
+
+      document.getElementById("padImage").checked = (pluginSettings && pluginSettings.padImage == "false");
+      document.getElementById("randomize").checked = !!(pluginSettings && pluginSettings.randomize);
+      if (document.getElementById("randomize").checked) document.getElementById("randomize").value = "true";
+
+      document.getElementById("backgroundColor").value = (pluginSettings && pluginSettings.backgroundColor) || "#ffffff";
+      backgroundOption = (pluginSettings && pluginSettings.backgroundOption) || "blur";
+    }
+
+    // Restore all toggle/radio/slider settings from localStorage
+    const saved = _lsRead();
+
+    if (typeof saved.showCaptions === "boolean") {
+      document.getElementById("showCaptions").checked = saved.showCaptions;
+      document.getElementById("showCaptions").value = saved.showCaptions ? "true" : "false";
+    }
+
+    if (typeof saved.padImage === "boolean") {
+      document.getElementById("padImage").checked = saved.padImage;
+      document.getElementById("padImage").value = saved.padImage ? "true" : "false";
+    }
+
+    if (typeof saved.randomize === "boolean") {
+      document.getElementById("randomize").checked = saved.randomize;
+      document.getElementById("randomize").value = saved.randomize ? "true" : "false";
+    }
+
+    if (saved.backgroundOption) {
+      backgroundOption = saved.backgroundOption;
+    }
+
+    if (saved.backgroundColor) {
+      document.getElementById("backgroundColor").value = saved.backgroundColor;
+    }
+
+    // Restore LUT selection first (affects slider state)
+    const savedLut = saved.lut || "";
+    const lutSelect = document.getElementById("lut");
+    if (lutSelect) lutSelect.value = savedLut;
+
+    if (savedLut && lutData[savedLut]) {
+      // LUT is selected — set sliders from LUT values and lock
+      const sliders = lutData[savedLut].sliders || {};
+      ["saturation", "brightness", "contrast", "sharpness"].forEach(id => {
+        const val = (id in sliders) ? sliders[id] : (systemDefaults[id] || 1.0);
+        setSlider(id, val);
+      });
+      setSlidersLocked(true);
+    } else {
+      // No LUT — restore sliders from localStorage or system defaults
+      ["saturation", "brightness", "contrast", "sharpness"].forEach(id => {
+        let val;
+        if (typeof saved[id] === "number") {
+          val = saved[id];
+        } else {
+          val = systemDefaults[id] || 1.0;
+        }
+        setSlider(id, val);
+      });
+      setSlidersLocked(false);
+    }
+
+    const bgRadio = document.querySelector(`input[name="backgroundOption"][value="${backgroundOption}"]`);
+    if (bgRadio) bgRadio.checked = true;
+
+    // Auto-save on any change
+    ["showCaptions", "padImage", "randomize", "backgroundColor", "saturation", "brightness", "contrast", "sharpness", "lut"].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.addEventListener("change", _saveAllSettings);
+        el.addEventListener("input", _saveAllSettings);
+      }
+    });
+
+    document.querySelectorAll('input[name="backgroundOption"]').forEach(el => {
+      el.addEventListener("change", _saveAllSettings);
+    });
+
+    const urlEl = document.getElementById("url");
+    if (urlEl) {
+      urlEl.addEventListener("blur", () => validateUrlViaBackend(true));
+      urlEl.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") { e.preventDefault(); validateUrlViaBackend(true); }
+      });
+      if (urlEl.value.trim()) setTimeout(() => validateUrlViaBackend(false), 0);
+    }
+  });
+</script>
