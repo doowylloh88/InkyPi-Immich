@@ -20,9 +20,9 @@ Display photos from an Immich album on InkyPi, with optional tag filtering, capt
 
 ## Screenshot
 
-![screenshot](https://github.com/doowylloh88/Immich/blob/main/immich/docs/images/immich_menu.jpg)
+![screenshot](https://github.com/doowylloh88/InkyPi-Immich/blob/main/immich/docs/images/immich_menu.jpg)
 
-![screenshot](https://github.com/doowylloh88/Immich/blob/main/immich/docs/images/zuma.png)
+![screenshot](https://github.com/doowylloh88/InkyPi-Immich/blob/main/immich/docs/images/zuma.png)
 
 ## 🛠️ Installation
 
